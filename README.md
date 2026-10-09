@@ -1,5 +1,9 @@
 # minidb
 
+I built this to understand how databases work underneath: how data is stored in a B-tree, how SQL text becomes a query plan, and how data survives a crash.
+
+**Result:** on 50,000 rows, a primary-key lookup through the B-tree is about XXXXx faster than a full table scan (measured with `bench.py`).
+
 A small relational database engine written from scratch in Python (standard library only).
 
 - **B-tree** storage engine (insert, update, delete, ordered range scans), no external libraries
