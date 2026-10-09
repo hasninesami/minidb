@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>minidb</title>
+<style>
+:root{--bg:#0f1115;--p:#181b22;--t:#e6e6e6;--m:#8b93a1;--a:#5eead4;--e:#f87171;--b:#2a2f3a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:14px system-ui,sans-serif;display:flex;min-height:100vh}
+aside{width:240px;background:var(--p);border-right:1px solid var(--b);padding:16px}
+main{flex:1;padding:16px;min-width:0}h1{font-size:18px;margin:0 0 12px;color:var(--a)}h2{font-size:12px;color:var(--m);text-transform:uppercase}
+textarea{width:100%;height:130px;background:var(--p);color:var(--t);border:1px solid var(--b);border-radius:6px;padding:10px;font:13px ui-monospace,monospace}
+button{margin:8px 8px 8px 0;background:var(--a);color:#042;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer}
+button.g{background:var(--b);color:var(--t)}.t{cursor:pointer;padding:6px 0;border-bottom:1px solid var(--b)}.t small{display:block;color:var(--m)}
+.r{background:var(--p);border:1px solid var(--b);border-radius:6px;margin-bottom:12px;overflow-x:auto}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 12px;border-bottom:1px solid var(--b)}th{color:var(--a)}
+.meta{padding:8px 12px;color:var(--m);font-size:12px}.err{color:var(--e);padding:12px}
+@media(max-width:700px){body{flex-direction:column}aside{width:100%}}
+</style></head><body>
+<aside><h1>minidb</h1><h2>Tables</h2><div id="tb"></div></aside>
+<main>
+<textarea id="q" spellcheck="false">CREATE TABLE users (id INT PRIMARY KEY, name TEXT, age INT);
+INSERT INTO users VALUES (1,'Rahim',21),(2,'Nusrat',22),(3,'Tanvir',20);
+SELECT * FROM users WHERE id >= 2;</textarea>
+<div><button onclick="run()">Run (Ctrl+Enter)</button><button class="g" onclick="q.value=''">Clear</button></div>
+<div id="out"></div>
+</main>
+<script>
+const q=document.getElementById('q'),out=document.getElementById('out'),tb=document.getElementById('tb');
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function card(r){
+  let h='<div class="r">';
+  if(r.cols)h+='<table><tr>'+r.cols.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr>'+r.rows.map(x=>'<tr>'+x.map(v=>'<td>'+(v===null?'<i>NULL</i>':esc(v))+'</td>').join('')+'</tr>').join('')+'</table>';
+  return h+'<div class="meta">'+esc(r.msg)+(r.plan?' · plan: '+esc(r.plan):'')+' · '+r.ms+' ms</div></div>';
+}
+async function run(){
+  const res=await fetch('/api/query',{method:'POST',body:JSON.stringify({sql:q.value})});
+  const d=await res.json();
+  out.innerHTML=d.error?'<div class="r err">'+esc(d.error)+'</div>':d.results.map(card).join('');
+  tables();
+}
+async function tables(){
+  const d=await (await fetch('/api/tables')).json();
+  tb.innerHTML=d.rows.map(r=>'<div class="t" onclick="q.value=\'SELECT * FROM '+r[0]+' LIMIT 50;\'">'+esc(r[0])+'<small>'+r[2]+' rows · depth '+r[3]+'</small></div>').join('')||'<small>none yet</small>';
+}
+q.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')run()});
+tables();
+</script></body></html>
