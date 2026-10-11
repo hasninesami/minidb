@@ -215,7 +215,7 @@ class DB:
         rows, plan = s.match(t, w)
         if cols == 'count':
             return {'cols': ['count'], 'rows': [[len(rows)]], 'plan': plan, 'msg': '1 row(s)'}
-        rs = [r for _, r in rows]
+        rs = [list(r) for _, r in rows]
         if ob:
             i = t.col(ob[0])
             rs.sort(key=lambda r: (r[i] is None, 0 if r[i] is None else r[i]), reverse=ob[1])
